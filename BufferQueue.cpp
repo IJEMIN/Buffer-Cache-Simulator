@@ -16,6 +16,9 @@ BufferQueue::BufferQueue(){
     
     //쓰레기값 투척
     front->blockNumber = 6666;
+
+	front->qNext = NULL;
+	front->qPrev = NULL;
     
     
 }

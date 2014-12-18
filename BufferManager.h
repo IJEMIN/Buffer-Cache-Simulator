@@ -79,6 +79,7 @@ public:
     
     void PrintHashTable();
     
-    
+	void syncWithDisk();
+
 };
 #endif /* defined(__Buffer_Cache_Simulator__BufferManager__) */

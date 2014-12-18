@@ -91,6 +91,7 @@ bool BufferManager::RunProcess(Process *runningProcess)
         if(bufferBeWriten == NULL)
         {
             runningProcess->setProcessState(runningProcess->SLEEP);
+			freeBufferList.syncBuffersWithDisk();
             return false;
         }
         
@@ -195,7 +196,11 @@ bool BufferManager::ExecuteProcess(Process *runningProcess)
     return false;
 }
 
+void BufferManager::syncWithDisk()
+{
+	freeBufferList.syncBuffersWithDisk();
 
+}
 
 void BufferManager::RunMultiProcess()
 {

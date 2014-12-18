@@ -9,6 +9,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "BufferManager.h"
+#include <Windows.h>
 
 using namespace std;
 int main() {
@@ -22,32 +23,41 @@ int main() {
     
     queue<Process*> sleepProcessList;
     
-    /////버퍼 100개추가
-    for (int i = 0; i<80;i++)
+    /////버퍼 10개추가
+    for (int i = 0; i<50;i++)
     {
         buffer = new Buffer;
         buffer->blockNumber = i;
+
+		buffer->qNext = NULL;
+		buffer->qPrev = NULL;
+		buffer->listNext = NULL;
+		buffer->listPrev = NULL;
+
         
         newBufferManager.AddNewBuffer(buffer);
     }
     
     
     
-    ///프로세스 100개 추가. 사용하는 디스크 블록은 50개
+    ///프로세스 100개 추가. 사용하는 디스크 블록은 100개
     for (int i = 0; i<100; i++)
     {
-        newBufferManager.AddNewProcess(rand()%50);
+        newBufferManager.AddNewProcess(rand()%200);
         
     }
     queue<Process*> processListCopy(newBufferManager.processList);
     queue<Process*> processAleadyRunnedCopy(newBufferManager.processList);
-    for (int i =0; i<100;i++)
+	for (int i = 0; i<50; i++)
     {
+		system("cls");
+		cout << "RUNNING PHASE: "<<i << endl;
         cout << endl;
         cout << "REQUESTED BLOCK NUM: " << processListCopy.front()->requestedBlockNumber << endl;
         if(!newBufferManager.RunProcess(processListCopy.front()))
         {
             processListCopy.front()->setProcessState(processListCopy.front()->SLEEP); //만약 프로세스가 러닝에 실패하면 슬립으로 간다.
+			cout << "Failed, PROCESS GO TO SLEEP" << endl;
         
             //그리고 슬립 큐에 추가.
             sleepProcessList.push(processListCopy.front());
@@ -59,25 +69,66 @@ int main() {
         newBufferManager.PrintHashTable();
         processListCopy.pop();
         cout << endl;
+
+		Sleep(0.4);
     }
     
     cout << "////////////////////////////" << endl << endl;
-    cout << "SLEEPING PROCESSES INFO" << endl;
-    
     cout << "NUMBER OF SLEEPING PROCESSES: ";
     cout << sleepProcessList.size() << endl;
-    
-    
     cout << "////////////////////////////" << endl << endl;
     
-    cout << "FROM HERE EXIT ALL RUNNING PROCESSES" << endl << endl;
+	cout << "FROM HERE, END ALL RUNNING PROCESSES" << endl << "AND, AWAKE TRAPED(SLEEPING) PROCESS AT THE SAMETIME" << endl;
+
     
+
+	system("pause");
     
-    for (int i=0; i<100;i++)
+	int phaseNum = 0;
+
+	int stuckCounter = 0;
+	while (!sleepProcessList.empty())
     {
+		cout << system("cls");
+		cout << endl;
+
+		cout << "Closing Processes... Awake Traped Processes SameTime..." << endl;
+		cout << "Left Traped Processes: " << sleepProcessList.size() << endl;
+		cout << "End Phase:" << phaseNum << endl;
         newBufferManager.EndProcess(processAleadyRunnedCopy.front());
         processAleadyRunnedCopy.pop();
+		
+		
+		
+		if(!sleepProcessList.empty())
+		{
+			stuckCounter++;
+			//슬립된 프로세스들을 깨운다.
+			sleepProcessList.front()->awakeProcess();
+			int rNum = sleepProcessList.front()->requestedBlockNumber;
+
+			if (newBufferManager.RunProcess(sleepProcessList.front()))
+			{
+				cout << "SLEEP PROCESS AWAKED!" << endl;
+				cout << "Requested Block: " << rNum << endl;
+				
+				sleepProcessList.pop();
+
+				stuckCounter = 0;
+			}
+
+			//DELAY가 너무많아 STUCK된 상태,.
+			if (stuckCounter > 4)
+				newBufferManager.syncWithDisk();
+		}
+
         newBufferManager.PrintFreeList();
         newBufferManager.PrintHashTable();
+
+		Sleep(0.4);
     }
+
+	cout << "Left Traped Processes: " << sleepProcessList.size() << endl;
+	cout << "ALL TRAPED PROCESSES AWAKEN" << endl;
+
 }
